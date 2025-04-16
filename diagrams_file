@@ -1,0 +1,164 @@
+//1. master class
+
+classDiagram
+
+    %% --- CSV Input Representation ---
+    class TweetCSV {
+        +string id
+        +string speaker_nm
+        +string conversation_id
+        +string reply_to_nm
+        +datetime timestamp
+        +string text
+        +int likes
+        +int shares
+        +int num_comments
+        +string cleaned_text
+        +list~string~ named_entities
+        +float sentiment
+        +list~string~ tokens
+    }
+
+    %% --- Graph Components Derived from CSV ---
+    class TweetNode {
+        +string node_id
+        +string speaker
+        +string text
+        +datetime timestamp
+    }
+
+    class ReplyEdge {
+        +string parent_id
+        +string reply_id
+        +string relation = "reply"
+        +datetime timestamp
+    }
+
+    %% --- Graph Construction and Processing ---
+    class TGN {
+        +constructGraphFromCSV(csv: TweetCSV)
+        +addNode(node: TweetNode)
+        +addEdge(edge: ReplyEdge)
+        +extractTemporalFeatures()
+    }
+
+    %% --- Prediction Pipeline ---
+    class GPT4Predictor {
+        +predictFutureContent(graph: TGN)
+        +predictVirality(graph: TGN)
+    }
+
+    class HateClassifier {
+        +classifyIntensity(content)
+        +extractSHAP(content)
+    }
+
+    %% --- Output Interface ---
+    class Dashboard {
+        +displayUtterance()
+        +showLabels()
+        +visualizeIntensity()
+        +plotVirality()
+    }
+
+    %% --- Relationships ---
+    TweetCSV --> TweetNode : extract nodes
+    TweetCSV --> ReplyEdge : extract edges
+    TweetNode --> TGN : add as node
+    ReplyEdge --> TGN : add as edge
+    TGN --> GPT4Predictor : input dynamic graph
+    GPT4Predictor --> HateClassifier : pass predicted content
+    HateClassifier --> Dashboard : results + SHAP
+
+
+//2. stateDiagram
+
+stateDiagram-v2
+    [*] --> DataScrapped
+    DataScrapped --> Preprocessed
+    Preprocessed --> NodeCreated
+    NodeCreated --> EdgeLinked
+    EdgeLinked --> EmbeddedInGraph
+    EmbeddedInGraph --> Predicted
+    Predicted --> Classified
+    Classified --> Visualized
+    Visualized --> [*]
+
+//3. ui
+
+flowchart TD
+    UI[User Interface]
+
+    UI --> Filter[Filters: Speaker, Sentiment, Time]
+    UI --> GraphView[Graph View: TGN Threads]
+    UI --> TableView[Table View: Tweets]
+    UI --> NodeDetail[Node Detail Panel]
+
+    NodeDetail --> Labels[Hate Intensity Labels]
+    NodeDetail --> SHAP["Explainability (SHAP)"]
+    NodeDetail --> Trend[Virality Trend Graph]
+
+    GraphView --> Click[Click Node → Expand Replies]
+
+
+//4. report
+
+flowchart TD
+    Report["Weekly Hate Analytics Report"]
+    Report --> Summary["Global Summary: Tweets, Threads"]
+    Report --> Peaks["Predicted Hate Peaks"]
+    Report --> Labels["Hate Levels Distribution"]
+    Report --> Entities["Top Named Entities (NER)"]
+    Report --> SHAP["Top SHAP Contributors"]
+    Report --> Forecast["Virality & Hate Forecasts"]
+
+//5. external interface
+
+flowchart TD
+    A[User Uploads CSV] -->|ETL| B[TGN Constructor]
+    B -->|API| C[GPT-4 Service]
+    C --> D[HateBERT + SHAP Service]
+    D --> E[Frontend Dashboard]
+
+    A -->|Upload Interface| E
+    E -->|Visualization| User
+
+    D --> F[PDF Report Generator]
+    F -->|Email / Download| User
+
+//6. packaging and deployment
+
+flowchart TD
+    subgraph Ingestion Layer
+        A[CSV Upload] --> B[ETL Service]
+    end
+
+    subgraph Graph Engine
+        B --> C[TGN Constructor]
+    end
+
+    subgraph Model Inference
+        C --> D[GPT-4 Predictor]
+        D --> E[Hate Classifier]
+    end
+
+    subgraph Output
+        E --> F[Frontend Dashboard]
+        E --> G[Report Generator]
+    end
+
+    subgraph Deployment
+        B
+        C
+        D
+        E
+        F
+        G
+    end
+
+    subgraph DevOps
+        H[GitHub Actions] --> I[Docker Compose]
+        I --> J[Kubernetes Cluster]
+        Deployment --> J
+    end
+
